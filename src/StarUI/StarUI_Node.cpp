@@ -22,7 +22,7 @@
 		{ "StarLoadAnyTypeDataByUserData",			StarLoadAnyTypeDataByUserData::From },//
 		{ "StarHaveSavedAnyTypeDataByUserData",		StarHaveSavedAnyTypeDataByUserData::From },//
 		{ "StarFlushAnyTypeDataByUserData",			StarFlushAnyTypeDataByUserData::From },//
-
+		{"StarAccumulator",                         StarAccumulator::From},
 		{ "StarDelLoc",								StarDelLoc::From },//
 		{ "SH_SaveAny",								SH_SaveAny::From },//
 		{ "SH_LoadAny",								SH_LoadAny::From },//

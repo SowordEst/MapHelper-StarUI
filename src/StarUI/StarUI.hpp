@@ -413,22 +413,28 @@ namespace mh {
 			if (getParentNode()->getNameId() == "StarLuaRegionMultiple"s_hash) {
 				result += "local ydl_trigger\n";
 				result += "local ydl_triggerstep\n";
+				result += "local star_loopA\n";
+				result += "local star_loopIndex\n";
+				result += "local star_hash\n";
 			}
 			else {
 				//添加局部变量
+				func->current()->addLocal("star_loopA", "integer");
+				func->current()->addLocal("star_loopIndex", "integer");
+				func->current()->addLocal("star_hash", "integer");
 				func->current()->addLocal("ydl_triggerstep", "integer");
 				func->current()->addLocal("ydl_trigger", "trigger", std::string(), false);
 			}
 
 			params_finish = false;
-			result += func->getSpaces() + "set STES_Hash = StringHash( " + params[0]->toString(func) + ")\n";
+			result += func->getSpaces() + "set star_hash = StringHash( " + params[0]->toString(func) + ")\n";
 
-			result += func->getSpaces() + "set STES_Index = LoadInteger(STES_GetTable(),STES_Hash,skey_index)\n";
-			result += func->getSpaces() + "set STES_LoopA = 0\n";
+			result += func->getSpaces() + "set star_loopIndex = LoadInteger(STES_GetTable(),star_hash,skey_index)\n";
+			result += func->getSpaces() + "set star_loopA = 0\n";
 			result += func->getSpaces() + "loop\n";
 			func->addSpace();
-			result += func->getSpaces() + "exitwhen STES_LoopA>=STES_Index\n";
-			result += func->getSpaces() + "set ydl_trigger = LoadTriggerHandle(STES_GetTable(),STES_Hash,STES_LoopA) \n";
+			result += func->getSpaces() + "exitwhen star_loopA>=star_loopIndex\n";
+			result += func->getSpaces() + "set ydl_trigger = LoadTriggerHandle(STES_GetTable(),star_hash,star_loopA) \n";
 			result += func->getSpaces() + "YDLocalExecuteTrigger(ydl_trigger)\n";
 
 			if (getNameId() == "StarExecuteEventII"s_hash) {
@@ -556,25 +562,31 @@ namespace mh {
 			if (getParentNode()->getNameId() == "StarLuaRegionMultiple"s_hash) {
 				result += "local ydl_trigger\n";
 				result += "local ydl_triggerstep\n";
+				result += "local star_loopA\n";
+				result += "local star_loopIndex\n";
+				result += "local star_hash\n";
 			}
 			else {
 				//添加局部变量
+				func->current()->addLocal("star_loopA", "integer");
+				func->current()->addLocal("star_loopIndex", "integer");
+				func->current()->addLocal("star_hash", "integer");
 				func->current()->addLocal("ydl_triggerstep", "integer");
 				func->current()->addLocal("ydl_trigger", "trigger", std::string(), false);
 			}
 
 			params_finish = false;
 			result += func->getSpaces()
-				+ "set STES_Hash = " + params[2]->toString(func) + " + "
+				+ "set star_hash = " + params[2]->toString(func) + " + "
 				+ "GetHandleId("
 				+ params[1]->toString(func) + ")\n";
 
-			result += func->getSpaces() + "set STES_Index = LoadInteger(SUTL_HT,STES_Hash,skey_index)\n";
-			result += func->getSpaces() + "set STES_LoopA = 0\n";
+			result += func->getSpaces() + "set star_loopIndex = LoadInteger(SUTL_HT,star_hash,skey_index)\n";
+			result += func->getSpaces() + "set star_loopA = 0\n";
 			result += func->getSpaces() + "loop\n";
 			func->addSpace();
-			result += func->getSpaces() + "exitwhen STES_LoopA>=STES_Index\n";
-			result += func->getSpaces() + "set ydl_trigger = LoadTriggerHandle(SUTL_HT,STES_Hash,STES_LoopA) \n";
+			result += func->getSpaces() + "exitwhen star_loopA>=star_loopIndex\n";
+			result += func->getSpaces() + "set ydl_trigger = LoadTriggerHandle(SUTL_HT,star_hash,star_loopA) \n";
 			result += func->getSpaces() + "YDLocalExecuteTrigger(ydl_trigger)\n";
 			if (getNameId() == "StarExecuteUnitEventII"s_hash) {
 				result += func->getSpaces() + "call SaveInteger(YDHT,GetHandleId(ydl_trigger),SKey_PIndex,";
@@ -1293,6 +1305,68 @@ namespace mh {
 
 
 #pragma endregion
+
+
+	class StarAccumulator : public ActionNode {
+	public:
+		REGISTER_FROM_ACTION(StarAccumulator)
+
+			virtual std::string toString(TriggerFunction* func) override {
+			auto params = getParameterList();
+			Upvalue upvalueget = { Upvalue::TYPE::GET_LOCAL };
+			upvalueget.name = m_action->parameters[0]->value;
+			upvalueget.type = "integer";
+			std::string result2 = getUpvalue(upvalueget);
+			Upvalue upvalue = { Upvalue::TYPE::SET_LOCAL };
+			upvalue.name = m_action->parameters[0]->value;
+			upvalue.type = "integer";
+			upvalue.value = result2+" + "+ params[1]->toString();
+			auto root = std::dynamic_pointer_cast<TriggerNode>(getRootNode());
+			root->hasUpvalue = true;
+			std::string result = func->getSpaces() + "call " + getUpvalue(upvalue);
+			result += "\n";
+			result += func->getSpaces() + "if " + result2 +" == "+params[2]->toString() + " then\n";
+			std::vector<std::vector<NodePtr>> nodes(3);
+				func->addSpace();
+				for (auto& node : getChildList()) {
+					result += node->toString(func);
+				}
+				func->subSpace();
+			result += func->getSpaces() + "endif\n";
+
+			//主动申明
+			getValue([&](NodePtr ptr) {
+				if (ptr->getType() == TYPE::CLOSURE) {
+					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+					if (node->getCurrentGroupId() == node->getCrossDomainIndex()) {
+						node->define_upvalue_map.emplace(upvalue.name, upvalue);
+					}
+					return true;
+				}
+				return false;
+				});
+
+
+			//记录逆天变量 用来类型检查
+			auto& map = root->all_upvalue_map[upvalue.name];
+			auto& editor = get_trigger_editor();
+			auto base = editor.getBaseType(upvalue.type);
+			if (map.find(base) == map.end()) {
+				if (!g_make_editor_data) {
+					map.emplace(base, TriggerNode::WarningInfo{ std::string(), (Action*)getData() });
+				}
+				else {
+					map.emplace(base, TriggerNode::WarningInfo{ result });
+				}
+			}
+
+			return result;
+		}
+	};
+
+
+
+
 
 	class StarChildrenBlockExecute : public ActionNode {
 	public:

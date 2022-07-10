@@ -3,6 +3,11 @@
 		{ Action::Type::action , "WESTRING_ACTIONS" }
 },
 	},
+	{ "StarAccumulator",
+{
+		{ Action::Type::action , "WESTRING_ACTIONS" }
+},
+	},
 	{ "StarExecuteTriggerExReturn",
 {
 	{ Action::Type::action , "WESTRING_ReturnPARAMETERS" }

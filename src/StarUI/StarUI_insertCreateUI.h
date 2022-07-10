@@ -1,4 +1,5 @@
 	case "StarLoadAnyTypeDataByUserData"s_hash:
+	case "StarAccumulator"s_hash:
 	case "StarFlushAnyTypeDataByUserData"s_hash:
 	case "StarHaveSavedAnyTypeDataByUserData"s_hash:
 	case "SUTL_UnitAddEventCallBack"s_hash:

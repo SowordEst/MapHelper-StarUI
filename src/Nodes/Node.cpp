@@ -177,8 +177,7 @@ namespace mh {
 			node1->setType(TYPE::CALL);
 			node2->setType(TYPE::CALL);
 
-	
-		
+
 			result += func->getSpaces() + "if (" + node0->toString(func) + ") then\n";
 			func->addSpace();
 			result += node1->toString(func);
@@ -1063,17 +1062,17 @@ namespace mh {
 
 			std::string result = getUpvalue(upvalue);
 
-			//主动申明
-			getValue([&](NodePtr ptr) {
-				if (ptr->getType() == TYPE::CLOSURE) {
-					auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
-					if (node->getCurrentGroupId() == node->getCrossDomainIndex()) {
-						node->define_upvalue_map.emplace(upvalue.name, upvalue);
-					}
-					return true;
-				}
-				return false;
-			});
+			////主动申明
+			//getValue([&](NodePtr ptr) {
+			//	if (ptr->getType() == TYPE::CLOSURE) {
+			//		auto node = std::dynamic_pointer_cast<ClosureNode>(ptr);
+			//		if (node->getCurrentGroupId() == node->getCrossDomainIndex()) {
+			//			node->define_upvalue_map.emplace(upvalue.name, upvalue);
+			//		}
+			//		return true;
+			//	}
+			//	return false;
+			//});
 
 			//记录逆天变量 用来类型检查
 			auto& map = root->all_upvalue_map[upvalue.name];
